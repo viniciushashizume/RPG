@@ -1,0 +1,4 @@
+(Inicialmente)
+Elfo
+Humano
+Anão

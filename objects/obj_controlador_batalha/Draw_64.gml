@@ -49,7 +49,7 @@ draw_text(_gui_w / 2, 100, texto_log);
 // ==================================================
 // 3. RODAPÉ: BOTÕES HORIZONTAIS
 // ==================================================
-if (estado == ESTADO_BATALHA.TURNO_JOGADOR || estado == ESTADO_BATALHA.MENU_REACAO) {
+if ((estado == ESTADO_BATALHA.TURNO_JOGADOR || estado == ESTADO_BATALHA.MENU_REACAO || estado == ESTADO_BATALHA.MENU_MAGIA) && delay_turno == 0) {
     
     var _qtd = array_length(menu_atual);
     var _largura_botao = 180;

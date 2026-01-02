@@ -25,17 +25,53 @@ array_push(inimigos, _ini);
 texto_log = "Batalha Iniciada!";
 
 // --- FUNÇÃO DE AÇÃO ---
-executar_acao_jogador = function(_tipo_acao) {
-    var _alvo = inimigos[0]; 
+// --- FUNÇÃO PARA EXECUTAR MAGIA (NOVA) ---
+executar_magia = function(_magia_struct) {
+    var _alvo = inimigos[0];
+    
+    // Verifica Sanidade/Mana
+    if (jogador.sanidade >= _magia_struct.custo) {
+        jogador.sanidade -= _magia_struct.custo;
+        
+        // Causa o dano (ou cura se for negativo)
+        // Nota: Se quiser fazer cura, o receber_dano do inimigo vai tirar vida.
+        // Para cura no jogador, teríamos que fazer um if especial aqui.
+        
+        if (_magia_struct.dano < 0) {
+            // Lógica de Cura (Ex: Guerreiro)
+            var _cura = abs(_magia_struct.dano);
+            jogador.hp_atual = min(jogador.hp_atual + _cura, jogador.hp_max);
+            texto_log = "Voce se curou em " + string(_cura) + " HP!";
+        } else {
+            // Lógica de Dano (Ex: Mago)
+            var _res_rit = _alvo.receber_dano(_magia_struct.dano, jogador);
+            texto_log = _magia_struct.nome + "! " + _res_rit;
+        }
 
-    // Lógica das ações (igual ao anterior)
+        // Passa o turno
+        if (instance_exists(_alvo) && _alvo.hp_atual <= 0) {
+            instance_destroy(_alvo);
+            estado = ESTADO_BATALHA.VITORIA;
+            texto_log = "VITORIA!";
+        } else {
+            delay_turno = 80;
+            estado = ESTADO_BATALHA.TURNO_INIMIGO;
+        }
+
+    } else {
+        texto_log = "Sanidade insuficiente!";
+        // Não passa o turno, deixa o jogador escolher outra coisa
+    }
+}
+
+// --- FUNÇÃO DE AÇÃO JOGADOR (ATUALIZADA) ---
+executar_acao_jogador = function(_tipo_acao) {
+    var _alvo = inimigos[0];
+
     switch (_tipo_acao) {
         case "ATACAR":
             var _dano = jogador.arma_equipada.dano;
-            if (jogador.arma_equipada.tipo == "RANGED") {
-                if (jogador.arma_equipada.municao > 0) jogador.arma_equipada.municao--;
-                else _dano = floor(_dano / 4);
-            }
+            // ... (logica de municao se tiver) ...
             var _res = _alvo.receber_dano(_dano, jogador);
             texto_log = "Voce atacou: " + _res;
             break;
@@ -55,34 +91,27 @@ executar_acao_jogador = function(_tipo_acao) {
             texto_log = "Posicao de contra-ataque!";
             break;
 
-        case "MAGIA":
-            var _magia = new Magia("Bola de Fogo", 30, 10, 0);
-            if (jogador.sanidade >= _magia.custo) {
-                jogador.sanidade -= _magia.custo;
-                var _res_rit = _alvo.receber_dano(_magia.dano, jogador);
-                texto_log = "Magia! " + _res_rit;
-            } else {
-                texto_log = "Sem sanidade!";
-                return; 
-            }
-            break;
+        // REMOVI O CASE "MAGIA" DAQUI POIS AGORA ELE É TRATADO NO STEP EVENT
             
-        case "CONVERSA": texto_log = "Sem resposta..."; break;
+        case "CONVERSA": 
+            texto_log = "Sem resposta...";
+            break;
+
         case "FUGA": 
             if (random(100) > 50) { room_goto(rm_mapa); return; }
             else texto_log = "Fuga falhou!";
             break;
     }
 
-    // --- AQUI ESTÁ A CORREÇÃO DO TRAVAMENTO ---
-    // Se o inimigo morreu
-    if (instance_exists(_alvo) && _alvo.hp_atual <= 0) {
-        instance_destroy(_alvo);
-        estado = ESTADO_BATALHA.VITORIA;
-        texto_log = "VITORIA!";
-    } else {
-        // Se o inimigo ainda vive, passa pro turno dele COM UM DELAY
-        delay_turno = 80; // Espera 80 frames (aprox 1.5 seg) para você ler o texto
-        estado = ESTADO_BATALHA.TURNO_INIMIGO;
+    // Finalização do turno (Só acontece se não foi Fuga ou Erro)
+    if (_tipo_acao != "FUGA") {
+        if (instance_exists(_alvo) && _alvo.hp_atual <= 0) {
+            instance_destroy(_alvo);
+            estado = ESTADO_BATALHA.VITORIA;
+            texto_log = "VITORIA!";
+        } else {
+            delay_turno = 80;
+            estado = ESTADO_BATALHA.TURNO_INIMIGO;
+        }
     }
 }
