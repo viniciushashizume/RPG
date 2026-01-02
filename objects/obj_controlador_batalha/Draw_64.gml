@@ -6,36 +6,69 @@ var _gui_h = display_get_gui_height();
 draw_set_font(-1); // Use sua fonte pixelada
 
 // ==================================================
-// 1. TOPO: STATUS DO JOGADOR (Nome e Vida)
+// 1. TOPO: STATUS DA PARTY (Loop pelos membros)
 // ==================================================
-if (instance_exists(jogador)) {
-    var _topo_y = 40;
-    
-    // Nome do Personagem (Esquerda Superior ou Centro)
-    draw_set_halign(fa_left);
-    draw_set_color(cor_texto);
-    draw_text(50, _topo_y, jogador.nome); // Ex: "Leon"
 
-    // Barra de Vida (Ao lado do nome)
-    var _hp_x = 200;
-    var _hp_w = 200;
-    var _hp_h = 20;
-    var _hp_pct = (jogador.hp_atual / jogador.hp_max);
+// Define a posição inicial e o espaçamento vertical entre os membros
+var _topo_y_inicial = 40;
+var _espaco_vertical = 35; 
+
+// Verifica se a variável 'party' existe e tem gente (definida no Create)
+if (variable_instance_exists(id, "party") && array_length(party) > 0) {
     
-    // Label HP
-    draw_text(_hp_x - 40, _topo_y, "HP");
-    
-    // Fundo Vermelho
-    draw_set_color(c_maroon);
-    draw_rectangle(_hp_x, _topo_y, _hp_x + _hp_w, _topo_y + _hp_h, false);
-    
-    // Frente Amarela
-    draw_set_color(cor_selecionado);
-    draw_rectangle(_hp_x, _topo_y, _hp_x + (_hp_w * _hp_pct), _topo_y + _hp_h, false);
-    
-    // Texto numérico (ex: 50 / 100)
-    draw_set_color(c_white);
-    draw_text(_hp_x + _hp_w + 20, _topo_y, string(jogador.hp_atual) + " / " + string(jogador.hp_max));
+    // Loop para desenhar cada membro do grupo (0, 1, 2...)
+    for (var i = 0; i < array_length(party); i++) {
+        var _membro = party[i];
+        var _y_atual = _topo_y_inicial + (i * _espaco_vertical);
+        
+        // --- Indicador de Turno (Setinha >) ---
+        // Se for turno do jogador E o índice (i) for igual ao membro atual
+        if (estado == ESTADO_BATALHA.TURNO_JOGADOR && i == membro_atual_index) {
+            draw_set_halign(fa_right);
+            draw_set_color(c_yellow);
+            draw_text(40, _y_atual, ">"); // Desenha a seta antes do nome
+        }
+
+        // --- Nome do Personagem ---
+        draw_set_halign(fa_left);
+        draw_set_color(cor_texto);
+        
+        // Se o personagem estiver com 0 de vida, desenha o nome cinza (opcional)
+        if (_membro.hp_atual <= 0) draw_set_color(c_gray);
+        
+        draw_text(50, _y_atual, _membro.nome); 
+
+        // --- Barra de Vida ---
+        var _hp_x = 200;
+        var _hp_w = 200;
+        var _hp_h = 20; // Altura da barra
+        
+        // Evita divisão por zero se hp_max for 0 (segurança)
+        var _hp_pct = 0;
+        if (_membro.hp_max > 0) {
+            _hp_pct = (_membro.hp_atual / _membro.hp_max);
+        }
+        
+        // Label HP (opcional, removi para poupar espaço vertical se tiver 3 membros)
+        // draw_text(_hp_x - 40, _y_atual, "HP");
+        
+        // Fundo Vermelho (Barra vazia)
+        draw_set_color(c_maroon);
+        draw_rectangle(_hp_x, _y_atual, _hp_x + _hp_w, _y_atual + _hp_h, false);
+        
+        // Frente (Verde ou Amarela dependendo da vida)
+        if (_hp_pct < 0.25) draw_set_color(c_red);
+        else draw_set_color(c_green); // Mudei para verde para diferenciar da cor de seleção
+        
+        // Garante que a barra não fique negativa visualmente
+        var _largura_atual = max(0, _hp_w * _hp_pct);
+        draw_rectangle(_hp_x, _y_atual, _hp_x + _largura_atual, _y_atual + _hp_h, false);
+        
+        // Texto numérico (ex: 50 / 100)
+        draw_set_color(c_white);
+        // Centraliza o texto dentro da barra ou coloca ao lado
+        draw_text(_hp_x + _hp_w + 10, _y_atual, string(_membro.hp_atual) + "/" + string(_membro.hp_max));
+    }
 }
 
 // ==================================================
@@ -43,7 +76,7 @@ if (instance_exists(jogador)) {
 // ==================================================
 draw_set_halign(fa_center);
 draw_set_color(c_white);
-draw_text(_gui_w / 2, 100, texto_log);
+draw_text(_gui_w / 2, 180, texto_log); // Baixei um pouco o Y (para 180) para não bater nos nomes
 
 
 // ==================================================
@@ -62,7 +95,6 @@ if ((estado == ESTADO_BATALHA.TURNO_JOGADOR || estado == ESTADO_BATALHA.MENU_REA
     var _start_y = _gui_h - 100;
 
     draw_set_valign(fa_middle);
-    // draw_set_line_width(3); <--- LINHA REMOVIDA (CAUSAVA O ERRO)
 
     for (var i = 0; i < _qtd; i++) {
         var _bx = _start_x + (i * (_largura_botao + _espaco));
@@ -99,7 +131,6 @@ if ((estado == ESTADO_BATALHA.TURNO_JOGADOR || estado == ESTADO_BATALHA.MENU_REA
     }
     
     // Reset
-    // draw_set_line_width(1); <--- LINHA REMOVIDA
     draw_set_valign(fa_top);
     draw_set_halign(fa_left);
 }
