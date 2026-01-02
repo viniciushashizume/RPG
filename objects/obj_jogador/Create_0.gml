@@ -7,5 +7,5 @@ event_inherited();
 em_batalha = false; 
 
 // 3. Suas outras definições
-arma_equipada = new Arma("Pistola", 15, "RANGED", 6);
+arma_equipada = new Arma("ESPADA", 15, "MEELEE", 6);
 nome = "Personagem";

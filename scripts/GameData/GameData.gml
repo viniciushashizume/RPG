@@ -1,5 +1,5 @@
 // Script: GameData
-enum TIPO_DANO { FISICO, FOGO, RITUAL }
+enum TIPO_DANO { FISICO, FOGO, MAGIA }
 enum ESTADO_BATALHA { 
     INICIO, 
     TURNO_JOGADOR, 
@@ -19,7 +19,7 @@ function Arma(_nome, _dano, _tipo, _municao_max) constructor {
 }
 
 // Construtor de Rituais (Magias)
-function Ritual(_nome, _dano, _custo_sanidade, _turnos_carregar) constructor {
+function Magia(_nome, _dano, _custo_sanidade, _turnos_carregar) constructor {
     nome = _nome;
     dano = _dano;
     custo = _custo_sanidade;

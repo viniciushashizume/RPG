@@ -6,7 +6,7 @@ iniciativa = 10;
 
 // Inventário
 arma_equipada = new Arma("Punhos", 5, "MELEE", -1);
-rituais_conhecidos = [];
+magias_conhecidos = [];
 
 esta_defendendo = false; // Bloqueio
 esta_esquivando = false; // Chance de esquiva

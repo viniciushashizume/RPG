@@ -13,7 +13,7 @@ cor_texto = make_color_rgb(255, 140, 0);
 cor_selecionado = c_yellow;
 cor_fundo = c_black;
 
-opcoes_principal = ["ATACAR", "REAGIR", "RITUAL", "CONVERSA", "FUGA"];
+opcoes_principal = ["ATACAR", "REAGIR", "MAGIA", "CONVERSA", "FUGA"];
 opcoes_reacao = ["BLOQUEIO", "ESQUIVA", "CONTRA"];
 menu_atual = opcoes_principal; 
 menu_index = 0; 
@@ -55,12 +55,12 @@ executar_acao_jogador = function(_tipo_acao) {
             texto_log = "Posicao de contra-ataque!";
             break;
 
-        case "RITUAL":
-            var _ritual = new Ritual("Bola de Fogo", 30, 10, 0);
-            if (jogador.sanidade >= _ritual.custo) {
-                jogador.sanidade -= _ritual.custo;
-                var _res_rit = _alvo.receber_dano(_ritual.dano, jogador);
-                texto_log = "Ritual! " + _res_rit;
+        case "MAGIA":
+            var _magia = new Magia("Bola de Fogo", 30, 10, 0);
+            if (jogador.sanidade >= _magia.custo) {
+                jogador.sanidade -= _magia.custo;
+                var _res_rit = _alvo.receber_dano(_magia.dano, jogador);
+                texto_log = "Magia! " + _res_rit;
             } else {
                 texto_log = "Sem sanidade!";
                 return; 
