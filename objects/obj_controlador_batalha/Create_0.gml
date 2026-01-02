@@ -1,121 +1,176 @@
-/// Create Event - FINAL CORRIGIDO
+/// Create Event - CORRIGIDO (Iniciativa)
 
 // ==============================================================================
-// 1. SISTEMA DE SEGURANÇA (Para testes diretos na rm_batalha)
+// 1. SISTEMA DE SEGURANÇA E PARTY
 // ==============================================================================
 if (!variable_global_exists("party")) {
-    show_debug_message("AVISO: Criando Party de Teste Automática!");
     global.party = [];
-
-    // Cria instâncias temporárias (certifique-se de que os objetos existem)
-    // Se não tiverem objetos criados, o jogo vai dar erro ao desenhar, 
-    // então garanta que obj_guerreiro, etc. existem no projeto.
     if (object_exists(obj_guerreiro)) {
         var _g = instance_create_layer(-200, -200, "Instances", obj_guerreiro);
         _g.persistent = true;
+        _g.nome = "Guerreiro"; // Garante que tem nome para não dar erro no log
+        _g.iniciativa = 10;    // Valor padrão caso não tenha
         array_push(global.party, _g);
     }
-    
-    // Adicione outros membros se quiser testar com mais gente
-    // array_push(global.party, instance_create_layer(... obj_mago));
 }
-// ==============================================================================
 
-// --- CONFIGURAÇÕES INICIAIS ---
-estado = ESTADO_BATALHA.INICIO;
+party = global.party;
 
-// Pega a party global
-party = global.party; 
-// --- POSICIONAMENTO DA PARTY (Faltava isso!) ---
-// --- POSICIONAMENTO DA PARTY (Versão Diagonal) ---
+// --- POSICIONAMENTO DA PARTY ---
 var _inicio_x = 250;
 var _inicio_y = 300;
-var _espaco_x = 20;  // Diferença horizontal (efeito escada)
-var _espaco_y = 100; // Aumentei para 100 para dar mais ar entre eles
+var _espaco_y = 100;
 
 for (var i = 0; i < array_length(party); i++) {
     var _membro = party[i];
-    
-    // Posiciona em diagonal
-    // O Guerreiro fica na frente, o próximo um pouco pra trás, etc.
-    _membro.x = _inicio_x - (i * _espaco_x); 
+    _membro.x = _inicio_x - (i * 20);
     _membro.y = _inicio_y + (i * _espaco_y);
-    
-    // Garante visibilidade e profundidade correta
-    // depth = -y faz com que quem está mais embaixo (frente) cubra quem está atrás
     _membro.visible = true;
     _membro.depth = -_membro.y; 
-    
-    // IMPORTANTE: Impede que eles andem sozinhos se você tiver código de movimento no Step
-    _membro.em_batalha = true; 
+    _membro.em_batalha = true;
 }
 
-// Controle de Turnos da Party
-membro_atual_index = 0; 
-
-// Segurança caso a party esteja vazia (evita crash imediato)
-if (array_length(party) > 0) {
-    personagem_atual = party[membro_atual_index];
-} else {
-    personagem_atual = noone;
-}
-
+// ==============================================================================
+// 2. CRIAÇÃO DOS INIMIGOS (MOVIDO PARA CIMA)
+// ==============================================================================
 inimigos = [];
-delay_turno = 0;
 
-// --- CORES & VISUAL ---
+// Cria um inimigo básico para teste
+var _ini = instance_create_layer(800, 400, "Instances", obj_inimigo); 
+// Garante que o inimigo tenha valores padrão se faltar no objeto
+if (!variable_instance_exists(_ini, "iniciativa")) _ini.iniciativa = 5; 
+if (!variable_instance_exists(_ini, "nome")) _ini.nome = "Inimigo";
+
+array_push(inimigos, _ini);
+
+// ==============================================================================
+// 3. SISTEMA DE ORDEM DE TURNOS (LISTA UNIFICADA)
+// ==============================================================================
+lista_turnos = [];
+
+// Adiciona heróis
+for (var i = 0; i < array_length(party); i++) {
+    array_push(lista_turnos, party[i]);
+}
+
+// Adiciona inimigos (Agora funciona pois 'inimigos' já foi criado acima)
+for (var i = 0; i < array_length(inimigos); i++) {
+    array_push(lista_turnos, inimigos[i]);
+}
+
+// Ordena pela INICIATIVA (Maior -> Menor)
+array_sort(lista_turnos, function(_a, _b) {
+    // Se a variavel iniciativa não existir, usa 0 para evitar crash
+    var _init_a = variable_instance_exists(_a, "iniciativa") ? _a.iniciativa : 0;
+    var _init_b = variable_instance_exists(_b, "iniciativa") ? _b.iniciativa : 0;
+    return _init_b - _init_a;
+});
+
+// Configuração Inicial do Turno
+turno_index = 0;
+entidade_ativa = lista_turnos[turno_index];
+
+// Define cores e menus
 cor_borda = make_color_rgb(255, 140, 0);
 cor_texto = make_color_rgb(255, 140, 0); 
 cor_selecionado = c_yellow;
 cor_fundo = c_black;
 
-// --- DEFINIÇÃO DOS MENUS (AQUI ESTAVA O ERRO) ---
 opcoes_principal = ["ATACAR", "REAGIR", "MAGIA", "CONVERSA", "FUGA"];
-opcoes_reacao = ["BLOQUEIO", "ESQUIVA", "CONTRA"]; // <--- ESSA LINHA FALTAVA
-
+opcoes_reacao = ["BLOQUEIO", "ESQUIVA", "CONTRA"];
 menu_atual = opcoes_principal; 
 menu_index = 0;
 
-// --- CRIAÇÃO DO INIMIGO ---
-// Cria um inimigo básico para teste
-var _ini = instance_create_layer(800, 400, "Instances", obj_inimigo); 
-array_push(inimigos, _ini);
+// Verifica quem começa
+if (object_is_ancestor(entidade_ativa.object_index, obj_jogador) || entidade_ativa.object_index == obj_jogador) {
+    estado = ESTADO_BATALHA.TURNO_JOGADOR;
+    personagem_atual = entidade_ativa;
+    texto_log = "Vez de " + entidade_ativa.nome;
+} else {
+    estado = ESTADO_BATALHA.TURNO_INIMIGO;
+    personagem_atual = noone; // Menu desativado
+    texto_log = "Vez de " + entidade_ativa.nome;
+}
 
-texto_log = "Batalha Iniciada!";
+delay_turno = 0;
 
 
 // ==============================================================================
-// FUNÇÕES DE AÇÃO (ATUALIZADAS PARA O SISTEMA DE PARTY)
+// 4. FUNÇÕES DO CONTROLADOR
 // ==============================================================================
 
-// --- FUNÇÃO PARA EXECUTAR MAGIA ---
-executar_magia = function(_magia_struct) {
-    var _alvo = inimigos[0];
+// --- NOVA FUNÇÃO PARA AVANÇAR TURNO ---
+avancar_turno = function() {
+    turno_index++;
+    if (turno_index >= array_length(lista_turnos)) {
+        turno_index = 0; // Novo Round
+    }
     
-    // Verifica Sanidade/Mana do PERSONAGEM ATUAL
+    entidade_ativa = lista_turnos[turno_index];
+    
+    // Pula mortos
+    if (!instance_exists(entidade_ativa) || entidade_ativa.hp_atual <= 0) {
+        avancar_turno();
+        return;
+    }
+    
+    // Reseta status
+    entidade_ativa.esta_defendendo = false;
+    entidade_ativa.esta_esquivando = false;
+    entidade_ativa.esta_contra_atacando = false;
+    
+    texto_log = "Vez de " + entidade_ativa.nome;
+    
+    // Verifica se é Jogador ou Inimigo
+    if (object_is_ancestor(entidade_ativa.object_index, obj_jogador) || entidade_ativa.object_index == obj_jogador) {
+        estado = ESTADO_BATALHA.TURNO_JOGADOR;
+        personagem_atual = entidade_ativa;
+        menu_index = 0;
+        menu_atual = opcoes_principal;
+    } else {
+        estado = ESTADO_BATALHA.TURNO_INIMIGO;
+        personagem_atual = noone;
+        delay_turno = 60;
+    }
+}
+
+// --- EXECUTAR MAGIA ---
+executar_magia = function(_magia_struct) {
+    // Nota: precisa selecionar alvo dinamicamente depois, por enquanto pega o primeiro vivo
+    var _alvo = inimigos[0]; 
+    if (!instance_exists(_alvo) || _alvo.hp_atual <= 0) {
+        // Tenta achar outro vivo
+        for(var i=0; i<array_length(inimigos); i++) {
+            if (inimigos[i].hp_atual > 0) { _alvo = inimigos[i]; break; }
+        }
+    }
+
     if (personagem_atual.sanidade >= _magia_struct.custo) {
         personagem_atual.sanidade -= _magia_struct.custo;
 
-        // Causa o dano (ou cura se for negativo)
         if (_magia_struct.dano < 0) {
-            // Cura
             var _cura = abs(_magia_struct.dano);
             personagem_atual.hp_atual = min(personagem_atual.hp_atual + _cura, personagem_atual.hp_max);
-            texto_log = "Voce se curou em " + string(_cura) + " HP!";
+            texto_log = "Cura: " + string(_cura);
         } else {
-            // Dano
-            var _res_rit = _alvo.receber_dano(_magia_struct.dano, personagem_atual);
-            texto_log = _magia_struct.nome + "! " + _res_rit;
+            if (instance_exists(_alvo)) {
+                var _res = _alvo.receber_dano(_magia_struct.dano, personagem_atual);
+                texto_log = _magia_struct.nome + "! " + _res;
+            }
+        }
+        
+        // Verifica vitoria
+        var _inimigos_vivos = 0;
+        for(var i=0; i<array_length(inimigos); i++) {
+            if (inimigos[i].hp_atual > 0) _inimigos_vivos++;
         }
 
-        // Verifica morte do inimigo
-        if (instance_exists(_alvo) && _alvo.hp_atual <= 0) {
-            instance_destroy(_alvo);
+        if (_inimigos_vivos == 0) {
             estado = ESTADO_BATALHA.VITORIA;
             texto_log = "VITORIA!";
         } else {
             delay_turno = 80;
-            avancar_turno_party(); // Chama função auxiliar para passar a vez
+            avancar_turno();
         }
 
     } else {
@@ -123,18 +178,24 @@ executar_magia = function(_magia_struct) {
     }
 }
 
-// --- FUNÇÃO DE AÇÃO FÍSICA ---
+// --- AÇÃO FÍSICA JOGADOR ---
 executar_acao_jogador = function(_tipo_acao) {
-    var _alvo = inimigos[0];
-    
+    // Seleção simples de alvo (primeiro inimigo vivo)
+    var _alvo = noone;
+    for(var i=0; i<array_length(inimigos); i++) {
+        if (inimigos[i].hp_atual > 0) { _alvo = inimigos[i]; break; }
+    }
+
     switch (_tipo_acao) {
         case "ATACAR":
-            var _dano = 5; 
-            if (variable_instance_exists(personagem_atual, "arma_equipada") && personagem_atual.arma_equipada != undefined) {
-                _dano = personagem_atual.arma_equipada.dano;
+            if (_alvo != noone) {
+                var _dano = 5;
+                if (variable_instance_exists(personagem_atual, "arma_equipada") && is_struct(personagem_atual.arma_equipada)) {
+                    _dano = personagem_atual.arma_equipada.dano;
+                }
+                var _res = _alvo.receber_dano(_dano, personagem_atual);
+                texto_log = "Ataque: " + _res;
             }
-            var _res = _alvo.receber_dano(_dano, personagem_atual);
-            texto_log = "Voce atacou: " + _res;
             break;
 
         case "BLOQUEIO":
@@ -144,7 +205,7 @@ executar_acao_jogador = function(_tipo_acao) {
             
         case "ESQUIVA":
             personagem_atual.esta_esquivando = true;
-            texto_log = "Pronto para esquivar.";
+            texto_log = "Preparando esquiva.";
             break;
 
         case "CONTRA":
@@ -158,38 +219,27 @@ executar_acao_jogador = function(_tipo_acao) {
 
         case "FUGA": 
             if (random(100) > 50) { 
-                room_goto(rm_mapa); 
+                room_goto(rm_mapa); // Ajuste para sua sala de mapa
                 return; 
             }
-            else texto_log = "Fuga falhou!";
+            texto_log = "Fuga falhou!";
             break;
     }
 
-    // Finalização do turno
+    // Finaliza Turno
     if (_tipo_acao != "FUGA") {
-        if (instance_exists(_alvo) && _alvo.hp_atual <= 0) {
-            instance_destroy(_alvo);
+        // Checa Vitória
+        var _todos_mortos = true;
+        for(var i=0; i<array_length(inimigos); i++) {
+            if (inimigos[i].hp_atual > 0) _todos_mortos = false;
+        }
+
+        if (_todos_mortos) {
             estado = ESTADO_BATALHA.VITORIA;
             texto_log = "VITORIA!";
         } else {
             delay_turno = 80;
-            avancar_turno_party(); // Chama função auxiliar
+            avancar_turno();
         }
-    }
-}
-
-// --- FUNÇÃO AUXILIAR PARA PASSAR A VEZ ENTRE OS MEMBROS ---
-avancar_turno_party = function() {
-    membro_atual_index++;
-    
-    // Se acabou os membros da party, vai para o inimigo
-    if (membro_atual_index >= array_length(party)) {
-        estado = ESTADO_BATALHA.TURNO_INIMIGO;
-    } else {
-        // Se tem mais membro, atualiza o atual e reseta menu
-        texto_log = "Vez de " + party[membro_atual_index].nome;
-        menu_index = 0;
-        menu_atual = opcoes_principal;
-        estado = ESTADO_BATALHA.TURNO_JOGADOR;
     }
 }

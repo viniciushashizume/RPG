@@ -1,6 +1,5 @@
 // Step Event do Jogador
-if (!em_batalha) {
-    // Movimentação Overworld simples
+if (em_batalha == false) {  // Só anda se NÃO estiver em batalha
     var _vel = 4;
     var _hmove = keyboard_check(ord("D")) - keyboard_check(ord("A"));
     var _vmove = keyboard_check(ord("S")) - keyboard_check(ord("W"));

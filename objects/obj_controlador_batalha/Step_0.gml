@@ -1,136 +1,129 @@
-/// Step Event - CORRIGIDO PARA PARTY SYSTEM
+/// Step Event - CORRIGIDO (Sistema de Iniciativa)
 
-// 1. SISTEMA DE DELAY
-if (delay_turno > 0) {
-    delay_turno--;
-    return;
-}
-
-// 2. NAVEGAÇÃO (Funciona para todos os menus)
-if (estado == ESTADO_BATALHA.TURNO_JOGADOR || estado == ESTADO_BATALHA.MENU_REACAO || estado == ESTADO_BATALHA.MENU_MAGIA) {
-    var _move = keyboard_check_pressed(vk_right) - keyboard_check_pressed(vk_left);
-    if (_move != 0) {
-        menu_index += _move;
-        var _tamanho = array_length(menu_atual);
-        if (menu_index < 0) menu_index = _tamanho - 1;
-        if (menu_index >= _tamanho) menu_index = 0;
-    }
-}
-
-// 3. MÁQUINA DE ESTADOS
-switch (estado) {
-    case ESTADO_BATALHA.INICIO:
-        estado = ESTADO_BATALHA.TURNO_JOGADOR;
-        break;
-
-    // --- MENU PRINCIPAL ---
-    case ESTADO_BATALHA.TURNO_JOGADOR:
-        // ATUALIZAÇÃO IMPORTANTE: Garante que estamos controlando o membro certo da party
-        personagem_atual = party[membro_atual_index];
+switch(estado) {
     
-        menu_atual = opcoes_principal;
-        
-        if (keyboard_check_pressed(ord("Z")) || keyboard_check_pressed(vk_enter)) {
-            var _escolha = menu_atual[menu_index];
+    // --- TURNO DO JOGADOR ---
+    case ESTADO_BATALHA.TURNO_JOGADOR:
+        // Garante que personagem_atual existe
+        if (!instance_exists(personagem_atual)) {
+            avancar_turno();
+            break;
+        }
 
-            // 1. Se for REAGIR -> Abre submenu de reação
-            if (_escolha == "REAGIR") {
-                estado = ESTADO_BATALHA.MENU_REACAO;
-                menu_atual = opcoes_reacao;
-                menu_index = 0;
-            } 
-            // 2. Se for MAGIA -> Abre submenu de magia
-            else if (_escolha == "MAGIA") {
-                // CORREÇÃO: Verifica magias do 'personagem_atual', não de 'jogador'
-                if (array_length(personagem_atual.magias_conhecidos) > 0) {
-                    estado = ESTADO_BATALHA.MENU_MAGIA;
-                    menu_atual = [];
-                    // CORREÇÃO: Loop no 'personagem_atual'
-                    for (var i = 0; i < array_length(personagem_atual.magias_conhecidos); i++) {
-                        array_push(menu_atual, personagem_atual.magias_conhecidos[i].nome);
-                    }
-                    menu_index = 0;
-                    io_clear(); 
-                } else {
-                    texto_log = "Sem magias aprendidas!";
+        // Controles de Menu
+        var _up = keyboard_check_pressed(vk_up) || keyboard_check_pressed(ord("W"));
+        var _down = keyboard_check_pressed(vk_down) || keyboard_check_pressed(ord("S"));
+        var _enter = keyboard_check_pressed(vk_enter) || keyboard_check_pressed(vk_space);
+        var _back = keyboard_check_pressed(vk_escape);
+
+        // Navegação
+        if (_up) {
+            menu_index--;
+            if (menu_index < 0) menu_index = array_length(menu_atual) - 1;
+        }
+        if (_down) {
+            menu_index++;
+            if (menu_index >= array_length(menu_atual)) menu_index = 0;
+        }
+
+        // Seleção
+        if (_enter) {
+            var _acao_selecionada = menu_atual[menu_index];
+
+            // --- LÓGICA DO MENU PRINCIPAL ---
+            if (menu_atual == opcoes_principal) {
+                switch(_acao_selecionada) {
+                    case "ATACAR":
+                        executar_acao_jogador("ATACAR");
+                        break;
+                    case "REAGIR":
+                        menu_atual = opcoes_reacao;
+                        menu_index = 0;
+                        break;
+                    case "MAGIA":
+                        // Exemplo simples: cura (no futuro você pode abrir um menu de magias)
+                        executar_magia({nome: "Cura Menor", custo: 5, dano: -10}); 
+                        break;
+                    case "CONVERSA":
+                        executar_acao_jogador("CONVERSA");
+                        break;
+                    case "FUGA":
+                        executar_acao_jogador("FUGA");
+                        break;
                 }
             }
-            // 3. Qualquer outra coisa (Atacar, Item, Fuga) -> Executa imediatamente
-            else {
-                executar_acao_jogador(_escolha);
+            // --- LÓGICA DO MENU DE REAÇÃO ---
+            else if (menu_atual == opcoes_reacao) {
+                // Ao escolher uma reação, aplica e passa o turno
+                executar_acao_jogador(_acao_selecionada);
             }
         }
-        break;
 
-    // --- SUB-MENU REAÇÃO ---
-    case ESTADO_BATALHA.MENU_REACAO:
-        if (keyboard_check_pressed(ord("X"))) { 
-            estado = ESTADO_BATALHA.TURNO_JOGADOR;
+        // Voltar Menu
+        if (_back && menu_atual == opcoes_reacao) {
             menu_atual = opcoes_principal;
-            menu_index = 1; 
-            return;
-        }
-        if (keyboard_check_pressed(ord("Z")) || keyboard_check_pressed(vk_enter)) {
-            executar_acao_jogador(menu_atual[menu_index]);
-        }
-        break;
-
-    case ESTADO_BATALHA.MENU_MAGIA:
-        // Botão de Voltar
-        if (keyboard_check_pressed(ord("X"))) { 
-            estado = ESTADO_BATALHA.TURNO_JOGADOR;
-            menu_atual = opcoes_principal;
-            menu_index = 2; 
-            return;
-        }
-
-        // Confirmar Magia
-        if (keyboard_check_pressed(ord("Z")) || keyboard_check_pressed(vk_enter)) {
-            // CORREÇÃO: Pega magia do 'personagem_atual'
-            var _magia_selecionada = personagem_atual.magias_conhecidos[menu_index];
-            executar_magia(_magia_selecionada);
-            
-            io_clear(); 
-            menu_index = 0; 
+            menu_index = 0;
         }
         break;
 
     // --- TURNO DO INIMIGO ---
     case ESTADO_BATALHA.TURNO_INIMIGO:
-        if (array_length(inimigos) > 0 && instance_exists(inimigos[0])) {
-            var _inimigo = inimigos[0];
-            var _dano_base = (_inimigo.arma_equipada != undefined) ? _inimigo.arma_equipada.dano : 5;
-            
-            // CORREÇÃO: Inimigo escolhe um alvo aleatório da party
-            var _alvo_index = irandom(array_length(party) - 1);
-            var _alvo = party[_alvo_index];
-            
-            // Verifica se o alvo está vivo (opcional, mas recomendado)
-            if (_alvo.hp_atual > 0) {
-                 var _resultado_texto = _alvo.receber_dano(_dano_base, _inimigo);
-                 texto_log = "Inimigo atacou " + _alvo.nome + ": " + _resultado_texto;
-            } else {
-                 texto_log = "Inimigo rugiu!";
-            }
-            
-            // CORREÇÃO: Reseta status de TODOS os membros da party (loop)
-            for (var i = 0; i < array_length(party); i++) {
-                party[i].esta_defendendo = false;
-                party[i].esta_esquivando = false;
-                party[i].esta_contra_atacando = false;
-            }
-            
-            delay_turno = 80;
-            
-            // Reinicia o ciclo para o primeiro membro da party
-            membro_atual_index = 0;
-            estado = ESTADO_BATALHA.TURNO_JOGADOR;
+        if (delay_turno > 0) {
+            delay_turno--;
         } else {
-            estado = ESTADO_BATALHA.VITORIA;
+            // IA do Inimigo
+            if (instance_exists(entidade_ativa) && entidade_ativa.hp_atual > 0) {
+                
+                // Escolhe um alvo vivo aleatório
+                var _alvos_vivos = [];
+                for(var i=0; i<array_length(party); i++) {
+                    if (party[i].hp_atual > 0) array_push(_alvos_vivos, party[i]);
+                }
+
+                if (array_length(_alvos_vivos) > 0) {
+                    var _alvo = _alvos_vivos[irandom(array_length(_alvos_vivos)-1)];
+                    
+                    // Calcula Dano
+                    var _dano_base = 5;
+                    if (variable_instance_exists(entidade_ativa, "arma_equipada")) {
+                         // Lógica de arma se tiver
+                    }
+                    
+                    var _res = _alvo.receber_dano(_dano_base, entidade_ativa);
+                    texto_log = entidade_ativa.nome + " ataca " + _alvo.nome + ": " + _res;
+                }
+
+                // Passa a vez
+                delay_turno = 60; // Pequena pausa para ler o log
+                avancar_turno();
+                
+                // Trava momentaneamente para ler o log antes do próximo agir
+                estado = ESTADO_BATALHA.PROCESSANDO_ACAO; 
+            } else {
+                // Se o inimigo morreu ou não existe, pula
+                avancar_turno();
+            }
         }
         break;
         
+    // --- ESTADO DE ESPERA (Delay entre turnos) ---
+    case ESTADO_BATALHA.PROCESSANDO_ACAO:
+        if (delay_turno > 0) delay_turno--;
+        else {
+            // Retoma o estado correto baseado na nova entidade ativa
+             if (object_is_ancestor(entidade_ativa.object_index, obj_jogador) || entidade_ativa.object_index == obj_jogador) {
+                estado = ESTADO_BATALHA.TURNO_JOGADOR;
+             } else {
+                estado = ESTADO_BATALHA.TURNO_INIMIGO;
+             }
+        }
+        break;
+
     case ESTADO_BATALHA.VITORIA:
-        if (keyboard_check_pressed(ord("Z"))) room_goto(rm_mapa);
+        if (keyboard_check_pressed(vk_enter)) room_goto(rm_mapa);
+        break;
+
+    case ESTADO_BATALHA.DERROTA:
+        if (keyboard_check_pressed(vk_enter)) game_restart();
         break;
 }
