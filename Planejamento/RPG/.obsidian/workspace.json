@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Próxima atualização.md",
+                "file": "Correções.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Próxima atualização"
+              "title": "Correções"
             }
           }
         ],
@@ -200,12 +200,12 @@
   },
   "active": "2b083a5f3d794846",
   "lastOpenFiles": [
-    "Correções.md",
-    "Próxima atualização.md",
-    "Sistema de ações.md",
     "Planejamento.md",
-    "Raças.md",
     "Sistema de personagens.md",
+    "Sistema de ações.md",
+    "Raças.md",
+    "Próxima atualização.md",
+    "Correções.md",
     "create a link.md",
     "Welcome.md"
   ]

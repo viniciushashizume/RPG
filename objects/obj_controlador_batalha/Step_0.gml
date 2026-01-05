@@ -126,10 +126,30 @@ switch(estado) {
         }
         break;
 
-    case ESTADO_BATALHA.VITORIA:
-        if (keyboard_check_pressed(vk_enter)) room_goto(Room1);
-        break;
+case ESTADO_BATALHA.VITORIA:
+    if (keyboard_check_pressed(vk_enter)) {
+        
+        // LOOP DE LIMPEZA: Percorre toda a party para resetar o estado
+        for (var i = 0; i < array_length(global.party); i++) {
+            var _membro = global.party[i];
+            
+            // 1. Tira o modo de batalha (para liberar movimento do líder)
+            _membro.em_batalha = false;
+            
+            // 2. Define a visibilidade
+            if (i == 0) {
+                // Se for o primeiro da lista (Líder/Guerreiro), FICA VISÍVEL
+                _membro.visible = true; 
+            } else {
+                // Se forem os outros (Mago, Ladino), FICA INVISÍVEL
+                _membro.visible = false;
+            }
+        }
 
+        // Volta para a sala do mapa
+        room_goto(Room1);
+    }
+    break;
     case ESTADO_BATALHA.DERROTA:
         if (keyboard_check_pressed(vk_enter)) game_restart();
         break;

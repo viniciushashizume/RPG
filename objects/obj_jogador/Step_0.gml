@@ -7,11 +7,19 @@ if (em_batalha == false) {  // Só anda se NÃO estiver em batalha
     x += _hmove * _vel;
     y += _vmove * _vel;
 
-    // Colisão com inimigo no mapa para iniciar batalha
-    var _inimigo_mapa = instance_place(x, y, obj_inimigo_mapa);
-    if (_inimigo_mapa != noone) {
-        em_batalha = true;
-        room_goto(rm_batalha); // Vai para a sala de batalha
-        // Salvar dados do inimigo em um objeto global persistente antes de trocar
-    }
+var _inimigo_mapa = instance_place(x, y, obj_inimigo_mapa);
+
+if (_inimigo_mapa != noone) {
+    em_batalha = true;
+    
+    // 1. Salva sua posição atual para voltar nela depois
+    global.pos_antiga_x = x;
+    global.pos_antiga_y = y;
+    
+    // 2. SALVA O ID E DESTRÓI O INIMIGO DO MAPA AGORA
+    // Como a sala é persistente (Passo 1), ele não vai voltar quando retornarmos
+    instance_destroy(_inimigo_mapa); 
+    
+    room_goto(rm_batalha);
+}
 }
