@@ -12,8 +12,6 @@ if (variable_global_exists("party") && array_length(global.party) > 0) {
 }
 global.party = [];
 
-// Exemplo: Adicionando Guerreiro, Mago e Ladino ao grupo
-// Instanciamos eles fora da tela (x=-100) para não aparecerem no mapa se não quiser
 var _guerreiro = instance_create_layer(-100, -100, "Instances", obj_guerreiro);
 var _mago = instance_create_layer(-100, -100, "Instances", obj_mago);
 var _ladino = instance_create_layer(-100, -100, "Instances", obj_ladino);
