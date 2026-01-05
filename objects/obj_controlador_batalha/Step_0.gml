@@ -127,29 +127,52 @@ switch(estado) {
         break;
 
 case ESTADO_BATALHA.VITORIA:
-    if (keyboard_check_pressed(vk_enter)) {
-        
-        // LOOP DE LIMPEZA: Percorre toda a party para resetar o estado
-        for (var i = 0; i < array_length(global.party); i++) {
-            var _membro = global.party[i];
+        // --- BLOCO DE DISTRIBUIÇÃO DE XP ---
+        if (!xp_processado) {
+            var _xp_total = 0;
             
-            // 1. Tira o modo de batalha (para liberar movimento do líder)
-            _membro.em_batalha = false;
-            
-            // 2. Define a visibilidade
-            if (i == 0) {
-                // Se for o primeiro da lista (Líder/Guerreiro), FICA VISÍVEL
-                _membro.visible = true; 
-            } else {
-                // Se forem os outros (Mago, Ladino), FICA INVISÍVEL
-                _membro.visible = false;
+            // 1. Soma o XP de todos os inimigos da batalha
+            for (var i = 0; i < array_length(inimigos); i++) {
+                // Verifica se o inimigo tem valor de XP definido
+                if (variable_instance_exists(inimigos[i], "xp_recompensa")) {
+                    _xp_total += inimigos[i].xp_recompensa;
+                } else {
+                    _xp_total += 10; // Valor padrão caso esqueça de configurar
+                }
             }
+            
+            // 2. Divide entre os membros vivos da party
+            if (array_length(global.party) > 0) {
+                var _xp_por_membro = floor(_xp_total / array_length(global.party));
+                
+                // 3. Distribui o XP
+                for (var i = 0; i < array_length(global.party); i++) {
+                    var _membro = global.party[i];
+                    // Opcional: Só dar XP para quem está vivo
+                    if (_membro.hp_atual > 0) {
+                        _membro.ganhar_xp(_xp_por_membro);
+                    }
+                }
+                
+                // Atualiza o log para mostrar ao jogador
+                texto_log = "VITORIA! +" + string(_xp_por_membro) + " XP para cada.";
+            }
+            
+            xp_processado = true; // Garante que isso só rode uma vez
         }
+        // -----------------------------------
 
-        // Volta para a sala do mapa
-        room_goto(Room1);
-    }
-    break;
+        if (keyboard_check_pressed(vk_enter)) {
+            // LOOP DE LIMPEZA (Seu código existente continua aqui...)
+            for (var i = 0; i < array_length(global.party); i++) {
+                var _membro = global.party[i];
+                _membro.em_batalha = false;
+                if (i == 0) _membro.visible = true; 
+                else _membro.visible = false;
+            }
+            room_goto(Room1);
+        }
+        break;
     case ESTADO_BATALHA.DERROTA:
         if (keyboard_check_pressed(vk_enter)) game_restart();
         break;

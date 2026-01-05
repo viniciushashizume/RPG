@@ -2,7 +2,9 @@
 
 // ==============================================================================
 // 1. SISTEMA DE SEGURANÇA E PARTY
+
 // ==============================================================================
+xp_processado = false;
 if (!variable_global_exists("party")) {
     global.party = [];
     if (object_exists(obj_guerreiro)) {
@@ -33,7 +35,7 @@ for (var i = 0; i < array_length(party); i++) {
 // 2. CRIAÇÃO DOS INIMIGOS
 // ==============================================================================
 inimigos = [];
-var _ini = instance_create_layer(800, 400, "Instances", obj_inimigo);
+var _ini = instance_create_layer(800, 400, "Instances", obj_zumbi);
 if (!variable_instance_exists(_ini, "iniciativa")) _ini.iniciativa = 5;
 if (!variable_instance_exists(_ini, "nome")) _ini.nome = "Inimigo";
 array_push(inimigos, _ini);

@@ -28,7 +28,9 @@ esta_contra_atacando = false;
 // Função para ganhar XP
 ganhar_xp = function(_quantidade) {
     xp_atual += _quantidade;
-    if (xp_atual >= xp_proximo_nivel) {
+    
+    // MUDANÇA: Troque o 'if' por 'while' para permitir múltiplos level ups
+    while (xp_atual >= xp_proximo_nivel) {
         subir_nivel();
     }
 }
