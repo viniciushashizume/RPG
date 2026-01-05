@@ -6,8 +6,8 @@
   "name":"obj_inimigo_mapa",
   "overriddenProperties":[],
   "parent":{
-    "name":"Objetos",
-    "path":"folders/Objetos.yy",
+    "name":"Inimigos",
+    "path":"folders/Objetos/Inimigos.yy",
   },
   "parentObjectId":null,
   "persistent":false,
