@@ -23,6 +23,10 @@ esta_defendendo = false;
 esta_esquivando = false;
 esta_contra_atacando = false;
 
+chocado = false;            
+esquiva_garantida = false;  
+usou_pulso_acao = false;   
+
 // --- MÉTODOS DE NIVELAMENTO ---
 
 // Função para ganhar XP
@@ -52,26 +56,37 @@ receber_dano = function(_dano, _origem) {
     var _dano_final = _dano;
     var _mensagem = "";
 
-    // Lógica de Esquiva (50% de chance se ativada)
-	if (esta_esquivando) {
-        // Se destreza for alta, chance aumenta (exemplo de uso de atributo)
-        var _chance = 50 + (atributo_destreza - 10); 
-        if (random(100) < _chance) return "ESQUIVOU!";
+    // 1. Lógica da Ação Astuta (Ladino) - Esquiva 100%
+    // Verifica se a variável existe para evitar erros caso não tenha inicializado
+    if (variable_instance_exists(self, "esquiva_garantida") && esquiva_garantida) {
+        esquiva_garantida = false; // Consome a esquiva
+        return "ESQUIVOU (100%)!";
     }
 
-    // Lógica de Bloqueio (Reduz 50% do dano)
+    // 2. Lógica de Esquiva Comum (Baseada em Destreza)
+    if (esta_esquivando) {
+        var _chance = 50 + (atributo_destreza - 10);
+        if (random(100) < _chance) return "ESQUIVOU!";
+    }
+    
+    // 3. Lógica de Bloqueio (Reduz 50% do dano)
     if (esta_defendendo) {
         _dano_final = floor(_dano * 0.5);
         _mensagem = "BLOQUEADO! ";
     }
-
-    // Lógica de Contra-Ataque
+    
+    // 4. Lógica de Contra-Ataque
     if (esta_contra_atacando) {
         // Causa metade do dano recebido de volta ao atacante
-        _origem.hp_atual -= floor(_dano * 0.5);
+        if (instance_exists(_origem)) {
+            _origem.hp_atual -= floor(_dano * 0.5);
+        }
         _mensagem = "CONTRA-ATAK! ";
     }
 
+    // Aplica o dano final
     hp_atual -= _dano_final;
+    
+    // --- ESTA LINHA É A MAIS IMPORTANTE (O RETORNO) ---
     return _mensagem + string(_dano_final) + " de dano";
 }

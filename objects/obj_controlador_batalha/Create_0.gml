@@ -90,17 +90,30 @@ if (object_is_ancestor(entidade_ativa.object_index, obj_jogador) || entidade_ati
 avancar_turno = function() {
     turno_index++;
     if (turno_index >= array_length(lista_turnos)) {
-        turno_index = 0; // Novo Round
+        turno_index = 0;
     }
     
     entidade_ativa = lista_turnos[turno_index];
-    
+
     // Pula mortos
     if (!instance_exists(entidade_ativa) || entidade_ativa.hp_atual <= 0) {
         avancar_turno();
         return;
     }
-    
+
+    // --- LÓGICA DO MAGO (RAIO) ---
+    // Se estiver chocado, perde a vez
+    if (entidade_ativa.chocado) {
+        entidade_ativa.chocado = false; // Remove o efeito
+        texto_log = entidade_ativa.nome + " esta CHOCADO e perdeu a vez!";
+        
+        // Pequeno delay visual antes de pular
+        estado = ESTADO_BATALHA.PROCESSANDO_ACAO;
+        delay_turno = 60;
+        acao_completada = true; // Força o avanço no Step
+        return;
+    }
+    // -----------------------------
     // Reseta status
     entidade_ativa.esta_defendendo = false;
     entidade_ativa.esta_esquivando = false;
@@ -123,10 +136,10 @@ avancar_turno = function() {
 
 // --- EXECUTAR MAGIA (ATUALIZADO) ---
 executar_magia = function(_magia_struct) {
-    var _alvo = inimigos[0];
-    // Tenta achar alvo vivo
+    var _alvo = inimigos[0]; 
+    // (Código de seleção de alvo continua igual...)
     if (!instance_exists(_alvo) || _alvo.hp_atual <= 0) {
-        for(var i=0; i<array_length(inimigos); i++) {
+         for(var i=0; i<array_length(inimigos); i++) {
             if (inimigos[i].hp_atual > 0) { _alvo = inimigos[i]; break; }
         }
     }
@@ -134,20 +147,59 @@ executar_magia = function(_magia_struct) {
     if (personagem_atual.sanidade >= _magia_struct.custo) {
         personagem_atual.sanidade -= _magia_struct.custo;
         
-        if (_magia_struct.dano < 0) {
-            // Cura
-            var _cura = abs(_magia_struct.dano);
-            personagem_atual.hp_atual = min(personagem_atual.hp_atual + _cura, personagem_atual.hp_max);
-            texto_log = "Cura: +" + string(_cura) + " HP!";
-        } else {
-            // Dano
-            if (instance_exists(_alvo)) {
-                var _res = _alvo.receber_dano(_magia_struct.dano, personagem_atual);
-                texto_log = _magia_struct.nome + "! " + _res;
+        var _passar_turno = true; // Variável de controle
+
+        // --- HABILIDADES ESPECIAIS ---
+        
+        // 1. GUERREIRO: Pulso de Ação
+        if (_magia_struct.nome == "Pulso de Ação") {
+            if (!personagem_atual.usou_pulso_acao) {
+                personagem_atual.usou_pulso_acao = true;
+                texto_log = "ACTION SURGE! Mais uma acao!";
+                _passar_turno = false; // NÃO PASSA O TURNO
+            } else {
+                texto_log = "Precisa descansar para usar de novo!";
+                personagem_atual.sanidade += _magia_struct.custo; // Devolve custo se falhar
+                return; // Sai da função
             }
         }
         
-        // Verifica vitoria imediata
+        // 2. LADINO: Ação Astuta
+        else if (_magia_struct.nome == "Ação Astuta") {
+            personagem_atual.esquiva_garantida = true;
+            texto_log = "Esquiva Garantida preparada!";
+        }
+        
+        // 3. MAGO: Raio
+        else if (_magia_struct.nome == "Raio") {
+            if (instance_exists(_alvo)) {
+                var _res = _alvo.receber_dano(_magia_struct.dano, personagem_atual);
+                
+                // 5% de chance de chocar
+                if (random(100) < 5) {
+                    _alvo.chocado = true;
+                    _res += " (CHOQUE!)";
+                }
+                texto_log = "Raio! " + _res;
+            }
+        }
+        
+        // LÓGICA PADRÃO (Cura/Dano genérico)
+        else {
+            if (_magia_struct.dano < 0) {
+                var _cura = abs(_magia_struct.dano);
+                personagem_atual.hp_atual = min(personagem_atual.hp_atual + _cura, personagem_atual.hp_max);
+                texto_log = "Cura: +" + string(_cura) + " HP!";
+            } else {
+                if (instance_exists(_alvo)) {
+                    var _res = _alvo.receber_dano(_magia_struct.dano, personagem_atual);
+                    texto_log = _magia_struct.nome + "! " + _res;
+                }
+            }
+        }
+        
+        // --- FINALIZAÇÃO ---
+        // Verifica vitória
         var _inimigos_vivos = 0;
         for(var i=0; i<array_length(inimigos); i++) {
             if (inimigos[i].hp_atual > 0) _inimigos_vivos++;
@@ -157,15 +209,21 @@ executar_magia = function(_magia_struct) {
             estado = ESTADO_BATALHA.VITORIA;
             texto_log = "VITORIA!";
         } else {
-            // --- AQUI ESTA A CORREÇÃO ---
-            // Em vez de avancar_turno() direto, pausamos para ler
-            estado = ESTADO_BATALHA.PROCESSANDO_ACAO;
-            delay_turno = 90;       // 1.5 segundos para ler
-            acao_completada = true; // Avisa o Step que o turno acabou
+            // Só avança o turno se não for Pulso de Ação
+            if (_passar_turno) {
+                estado = ESTADO_BATALHA.PROCESSANDO_ACAO;
+                delay_turno = 90;
+                acao_completada = true;
+            } else {
+                // Se usou Pulso de Ação, apenas volta pro menu do jogador
+                estado = ESTADO_BATALHA.TURNO_JOGADOR;
+                menu_atual = opcoes_principal;
+                menu_index = 0;
+            }
         }
 
     } else {
-        texto_log = "Sanidade insuficiente!";
+        texto_log = "Sanidade/Mana insuficiente!";
     }
 }
 

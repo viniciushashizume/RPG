@@ -28,8 +28,8 @@
   "resourceVersion":"2.0",
   "solid":false,
   "spriteId":{
-    "name":"spr_enemy",
-    "path":"sprites/spr_enemy/spr_enemy.yy",
+    "name":"spr_zumbi",
+    "path":"sprites/spr_zumbi/spr_zumbi.yy",
   },
   "spriteMaskId":null,
   "visible":true,

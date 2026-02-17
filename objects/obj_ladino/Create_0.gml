@@ -28,8 +28,16 @@ subir_nivel = function() {
     xp_atual -= xp_proximo_nivel;
     xp_proximo_nivel = floor(xp_proximo_nivel * 1.5);
     
-    atributo_destreza += 1;
+    // Atributos de Ladino
+    atributo_destreza += 2;
     iniciativa = atributo_destreza * 2;
     hp_max += 6;
     hp_atual = hp_max;
+
+    // Habilidade Nível 2: Ação Astuta
+    if (nivel == 2) {
+        var _skill = new Magia("Ação Astuta", 0, 0, 0);
+        array_push(magias_conhecidos, _skill);
+        show_debug_message("Aprendeu Ação Astuta!");
+    }
 }
