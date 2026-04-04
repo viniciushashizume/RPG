@@ -1,20 +1,19 @@
 {
   "$GMObject":"",
-  "%Name":"obj_slime",
+  "%Name":"obj_mushroom_mapa",
   "eventList":[
     {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":0,"eventType":0,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
-    {"$GMEvent":"v1","%Name":"","collisionObjectId":null,"eventNum":64,"eventType":8,"isDnD":false,"name":"","resourceType":"GMEvent","resourceVersion":"2.0",},
   ],
   "managed":true,
-  "name":"obj_slime",
+  "name":"obj_mushroom_mapa",
   "overriddenProperties":[],
   "parent":{
     "name":"Inimigos",
     "path":"folders/Objetos/Inimigos.yy",
   },
   "parentObjectId":{
-    "name":"obj_entidade_base",
-    "path":"objects/obj_entidade_base/obj_entidade_base.yy",
+    "name":"obj_inimigo_mapa",
+    "path":"objects/obj_inimigo_mapa/obj_inimigo_mapa.yy",
   },
   "persistent":false,
   "physicsAngularDamping":0.1,

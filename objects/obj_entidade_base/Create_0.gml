@@ -1,4 +1,4 @@
-/// Create Event do obj_entidade_base (Atualizado)
+/// Create Event do obj_entidade_bas
 nome = "Entidade";
 nivel = 1;
 xp_atual = 0;
@@ -11,7 +11,7 @@ atributo_inteligencia = 10; // Dano mágico/Sanidade
 atributo_constituicao = 10; // HP
 
 // Status Derivados (Baseados nos arquivos existentes)
-hp_max = 10 + floor((atributo_constituicao - 10) / 2); // Fórmula D&D simples
+hp_max = 10 + floor((atributo_constituicao - 10) / 2);
 hp_atual = hp_max;
 sanidade = 10 + atributo_inteligencia;
 iniciativa = atributo_destreza;
@@ -27,25 +27,21 @@ chocado = false;
 esquiva_garantida = false;  
 usou_pulso_acao = false;   
 
-// --- MÉTODOS DE NIVELAMENTO ---
-
 // Função para ganhar XP
 ganhar_xp = function(_quantidade) {
     xp_atual += _quantidade;
-    
-    // MUDANÇA: Troque o 'if' por 'while' para permitir múltiplos level ups
     while (xp_atual >= xp_proximo_nivel) {
         subir_nivel();
     }
 }
 
-// Função de Level Up (Pode ser sobrescrita pelos filhos)
+// Função de Level Up
 subir_nivel = function() {
     nivel++;
     xp_atual -= xp_proximo_nivel;
     xp_proximo_nivel = floor(xp_proximo_nivel * 1.5);
     
-    // Aumenta atributos base (exemplo simples)
+    // Aumenta atributos base
     hp_max += 5 + floor((atributo_constituicao - 10) / 2);
     hp_atual = hp_max; // Cura ao upar
     show_debug_message(nome + " subiu para o nível " + string(nivel) + "!");
@@ -57,13 +53,12 @@ receber_dano = function(_dano, _origem) {
     var _mensagem = "";
 
     // 1. Lógica da Ação Astuta (Ladino) - Esquiva 100%
-    // Verifica se a variável existe para evitar erros caso não tenha inicializado
     if (variable_instance_exists(self, "esquiva_garantida") && esquiva_garantida) {
         esquiva_garantida = false; // Consome a esquiva
         return "ESQUIVOU (100%)!";
     }
 
-    // 2. Lógica de Esquiva Comum (Baseada em Destreza)
+    // 2. Lógica de Esquiva Comum
     if (esta_esquivando) {
         var _chance = 50 + (atributo_destreza - 10);
         if (random(100) < _chance) return "ESQUIVOU!";
@@ -81,12 +76,10 @@ receber_dano = function(_dano, _origem) {
         if (instance_exists(_origem)) {
             _origem.hp_atual -= floor(_dano * 0.5);
         }
-        _mensagem = "CONTRA-ATAK! ";
+        _mensagem = "CONTRA-ATAQUE! ";
     }
 
     // Aplica o dano final
     hp_atual -= _dano_final;
-    
-    // --- ESTA LINHA É A MAIS IMPORTANTE (O RETORNO) ---
     return _mensagem + string(_dano_final) + " de dano";
 }

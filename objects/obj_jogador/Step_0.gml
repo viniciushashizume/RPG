@@ -13,9 +13,6 @@ if (_inimigo_mapa != noone) {
     global.pos_antiga_x = x;
     global.pos_antiga_y = y;
     
-    // --- ADICIONE ISSO ---
-    // Verifica se o objeto do mapa tem uma variavel definindo quem ele é, 
-    // senão assume que é um zumbi por padrão
     if (variable_instance_exists(_inimigo_mapa, "inimigo_batalha")) {
         global.inimigo_spawn = _inimigo_mapa.inimigo_batalha;
     } else {

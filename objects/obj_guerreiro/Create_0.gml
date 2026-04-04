@@ -1,23 +1,16 @@
 /// Create Event do obj_guerreiro
 
-// 1. Executa o código do pai (obj_jogador/obj_entidade_base)
-// Isso inicializa hp_max = 100, sanidade = 50, etc.
 event_inherited(); 
-
-// 2. AGORA nós sobrescrevemos os valores. 
-// Como este código roda DEPOIS do inherited, ele "ganha" do código do pai.
 
 nome = "Guerreiro";
 
-// Definindo Atributos Iniciais (Nível 1)
+// atributos Iniciais (Nível 1)
 atributo_forca = 16;       
 atributo_destreza = 10;
 atributo_constituicao = 15; 
 atributo_inteligencia = 8;
 
-// Recalculando status baseados nos novos atributos
-// Note que estamos mudando o valor que o pai definiu
-hp_max = 12 + floor((atributo_constituicao - 10) / 2) * 20; // Multiplicador para ficar visível na barra
+hp_max = 12 + floor((atributo_constituicao - 10) / 2) * 20; 
 hp_atual = hp_max;
 
 // Trocando a arma padrão (Punhos) pela Espada

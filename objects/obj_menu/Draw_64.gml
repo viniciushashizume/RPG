@@ -56,8 +56,6 @@ if (index_menu_principal == 0) {
     
     draw_set_color(c_white);
     
-    // Desenha Sprite (Se tiver) - Opcional, precisa ajustar escala se for sprite de mapa
-    // draw_sprite_ext(_selecionado.sprite_index, 0, _x_detalhe + 50, _y_detalhe + 50, 2, 2, 0, c_white, 1);
     
     draw_text(_x_detalhe, _y_detalhe, "Nome: " + _selecionado.nome);
     draw_text(_x_detalhe, _y_detalhe + 30, "Nivel: " + string(_selecionado.nivel));

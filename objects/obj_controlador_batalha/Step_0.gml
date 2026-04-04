@@ -35,7 +35,7 @@ switch(estado) {
                     case "ATACAR": executar_acao_jogador("ATACAR"); break;
                     case "REAGIR": menu_atual = opcoes_reacao; menu_index = 0; break;
                     case "MAGIA":
-                        // Carrega magias dinamicamente
+                        // Carrega magias
                         if (variable_instance_exists(personagem_atual, "magias_conhecidos") && array_length(personagem_atual.magias_conhecidos) > 0) {
                             var _nomes = [];
                             for(var i=0; i<array_length(personagem_atual.magias_conhecidos); i++) {
@@ -55,7 +55,7 @@ switch(estado) {
             else if (menu_atual == opcoes_reacao) {
                 executar_acao_jogador(_acao_selecionada);
             }
-            // 3. Menu de Magias (O ELSE IMPORTANTE)
+            // 3. Menu de Magias
             else {
                 // Recupera a struct da magia e executa
                 var _magia_real = personagem_atual.magias_conhecidos[menu_index];
@@ -103,20 +103,16 @@ switch(estado) {
         }
         break;
 
-    // --- ESTADO DE ESPERA (PROCESSANDO) ---
     case ESTADO_BATALHA.PROCESSANDO_ACAO:
         if (delay_turno > 0) {
             delay_turno--;
         } else {
-            // O tempo de leitura acabou.
-            
-            // Se foi uma ação que finaliza turno (ataque/magia):
             if (acao_completada) {
-                acao_completada = false; // Reseta flag
+                acao_completada = false; 
                 avancar_turno();         // Passa a vez e muda o Texto para "Vez de..."
             } 
             else {
-                // Se foi apenas uma pausa sem passar turno (ex: animação), devolve controle
+                
                  if (object_is_ancestor(entidade_ativa.object_index, obj_jogador) || entidade_ativa.object_index == obj_jogador) {
                     estado = ESTADO_BATALHA.TURNO_JOGADOR;
                 } else {
@@ -127,17 +123,15 @@ switch(estado) {
         break;
 
 case ESTADO_BATALHA.VITORIA:
-        // --- BLOCO DE DISTRIBUIÇÃO DE XP ---
         if (!xp_processado) {
             var _xp_total = 0;
             
             // 1. Soma o XP de todos os inimigos da batalha
-            for (var i = 0; i < array_length(inimigos); i++) {
-                // Verifica se o inimigo tem valor de XP definido
+            for (var i = 0; i < array_length(inimigos); i++) { 
                 if (variable_instance_exists(inimigos[i], "xp_recompensa")) {
                     _xp_total += inimigos[i].xp_recompensa;
                 } else {
-                    _xp_total += 10; // Valor padrão caso esqueça de configurar
+                    _xp_total += 10; //valor padrao
                 }
             }
             
@@ -148,7 +142,7 @@ case ESTADO_BATALHA.VITORIA:
                 // 3. Distribui o XP
                 for (var i = 0; i < array_length(global.party); i++) {
                     var _membro = global.party[i];
-                    // Opcional: Só dar XP para quem está vivo
+                    // XP para quem está vivo
                     if (_membro.hp_atual > 0) {
                         _membro.ganhar_xp(_xp_por_membro);
                     }
@@ -160,10 +154,9 @@ case ESTADO_BATALHA.VITORIA:
             
             xp_processado = true; // Garante que isso só rode uma vez
         }
-        // -----------------------------------
 
         if (keyboard_check_pressed(vk_enter)) {
-            // LOOP DE LIMPEZA (Seu código existente continua aqui...)
+           
             for (var i = 0; i < array_length(global.party); i++) {
                 var _membro = global.party[i];
                 _membro.em_batalha = false;

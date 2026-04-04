@@ -1,0 +1,1 @@
+inimigo_batalha = obj_mushroom;
