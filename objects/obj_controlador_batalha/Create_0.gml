@@ -35,7 +35,7 @@ for (var i = 0; i < array_length(party); i++) {
 // 2. CRIAÇÃO DOS INIMIGOS
 // ==============================================================================
 inimigos = [];
-var _ini = instance_create_layer(800, 400, "Instances", obj_zumbi);
+var _ini = instance_create_layer(800, 400, "Instances", global.inimigo_spawn);
 if (!variable_instance_exists(_ini, "iniciativa")) _ini.iniciativa = 5;
 if (!variable_instance_exists(_ini, "nome")) _ini.nome = "Inimigo";
 array_push(inimigos, _ini);

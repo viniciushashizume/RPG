@@ -8,18 +8,22 @@ if (em_batalha == false) {  // Só anda se NÃO estiver em batalha
     y += _vmove * _vel;
 
 var _inimigo_mapa = instance_place(x, y, obj_inimigo_mapa);
-
 if (_inimigo_mapa != noone) {
     em_batalha = true;
-    
-    // 1. Salva sua posição atual para voltar nela depois
     global.pos_antiga_x = x;
     global.pos_antiga_y = y;
     
-    // 2. SALVA O ID E DESTRÓI O INIMIGO DO MAPA AGORA
-    // Como a sala é persistente (Passo 1), ele não vai voltar quando retornarmos
-    instance_destroy(_inimigo_mapa); 
-    
+    // --- ADICIONE ISSO ---
+    // Verifica se o objeto do mapa tem uma variavel definindo quem ele é, 
+    // senão assume que é um zumbi por padrão
+    if (variable_instance_exists(_inimigo_mapa, "inimigo_batalha")) {
+        global.inimigo_spawn = _inimigo_mapa.inimigo_batalha;
+    } else {
+        global.inimigo_spawn = obj_zumbi; 
+    }
+    // ---------------------
+
+    instance_destroy(_inimigo_mapa);
     room_goto(rm_batalha);
 }
 }
