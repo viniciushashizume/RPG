@@ -10,7 +10,7 @@ if (variable_global_exists("party") && array_length(global.party) > 0) {
 }
 global.party = [];
 
-var _guerreiro = instance_create_layer(-100, -100, "Instances", obj_guerreiro);
+var _guerreiro = instance_create_layer(50,200, "Instances", obj_guerreiro);
 var _mago = instance_create_layer(-100, -100, "Instances", obj_mago);
 var _ladino = instance_create_layer(-100, -100, "Instances", obj_ladino);
 
